@@ -72,11 +72,17 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="ContactEditComplete.cs" />
+    <Compile Include="PhonebookEnums.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
+    <Compile Include="ViewModels\PhoneBookEditViewModel.cs" />
     <Compile Include="ViewModels\PhoneBookViewModel.cs" />
     <Compile Include="ViewModels\PhoneContactViewModel.cs" />
     <Compile Include="Views\MainWindowView.xaml.cs">
       <DependentUpon>MainWindowView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\PhoneBookEditView.xaml.cs">
+      <DependentUpon>PhoneBookEditView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PhoneBookView.xaml.cs">
       <DependentUpon>PhoneBookView.xaml</DependentUpon>
@@ -131,6 +137,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Views\MainWindowView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\PhoneBookEditView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

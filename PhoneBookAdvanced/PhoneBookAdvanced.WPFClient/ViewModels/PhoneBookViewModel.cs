@@ -1,15 +1,12 @@
 ﻿using Caliburn.Micro;
 using PhoneBookAdvanced.Interfaces;
 using PhoneBookAdvanced.Model;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PhoneBookAdvanced.WPFClient.ViewModels
 {
-	public class PhoneBookViewModel : Screen
+	public class PhoneBookViewModel : Screen, IHandle<ContactEditComplete>
 	{
 		private IPhoneContactService _ContactService;
 		private IEventAggregator _EventAggregator;
@@ -29,10 +26,28 @@ namespace PhoneBookAdvanced.WPFClient.ViewModels
 			}
 		}
 
+		private string _Filter = string.Empty;
+		public string Filter
+		{
+			get
+			{
+				return (_Filter);
+			}
+			set
+			{
+				_Filter = value;
+				NotifyOfPropertyChange();
+				DisplayContacts();
+			}
+		}
+
+		private SortType ContactSortType = SortType.None;
+
 		public PhoneBookViewModel(IPhoneContactService contactservice, IEventAggregator eventaggregator)
 		{
 			_ContactService = contactservice;
 			_EventAggregator = eventaggregator;
+			_EventAggregator.Subscribe(this);
 
 			Contacts = new BindableCollection<PhoneContactViewModel>();
 		}
@@ -44,28 +59,79 @@ namespace PhoneBookAdvanced.WPFClient.ViewModels
 			if (contactlist != null)
 			{
 				contacts = contactlist.contacts;
-				FilterContacts();
+				DisplayContacts();
 			}
 		}
 
-		public void FilterContacts()
+		public void DisplayContacts()
 		{
 			Contacts.Clear();
-			foreach (PhoneContact contact in contacts)
+			foreach (PhoneContact contact in FilterContacts())
 			{
 				Contacts.Add(new PhoneContactViewModel(contact));
 			}
 		}
 
-		public void EditContact(PhoneContactViewModel model)
+		private List<PhoneContact> FilterContacts()
 		{
-			//TODO: Add PhoneContactEditViewModel that takes a PhoneContact object.
+			string filter = _Filter.ToLower();
+			IEnumerable<PhoneContact> filtered = contacts.Where(c => c.name.ToLower().Contains(filter) ||
+			c.address.ToLower().Contains(filter) ||
+			c.phone_number.ToLower().Contains(filter));
+
+			if (ContactSortType == SortType.Alphabetical)
+				filtered = filtered.OrderBy(f => f.name);
+			else if (ContactSortType == SortType.ReverseAlphabetical)
+				filtered = filtered.OrderByDescending(f => f.name);
+
+			return (filtered.ToList());
+		}
+
+		public void SortAlpha()
+		{
+			if (ContactSortType != SortType.Alphabetical)
+			{
+				ContactSortType = SortType.Alphabetical;
+				DisplayContacts();
+			}
+		}
+
+		public void SortReverseAlpha()
+		{
+			if (ContactSortType != SortType.ReverseAlphabetical)
+			{
+				ContactSortType = SortType.ReverseAlphabetical;
+				DisplayContacts();
+			}
 		}
 
 		public void DeleteContact(PhoneContactViewModel model)
 		{
 			contacts.Remove(model.Contact);
 			Contacts.Remove(model);
+		}
+
+		public void AddContact()
+		{
+			_EventAggregator.PublishOnUIThread(new PhoneBookEditViewModel(new PhoneContact(), _EventAggregator));
+		}
+
+		public void EditContact(PhoneContactViewModel model)
+		{
+			_EventAggregator.PublishOnUIThread(new PhoneBookEditViewModel(model.Contact, _EventAggregator));
+		}
+
+		public void Handle(ContactEditComplete message)
+		{
+			if (!message.EditCancelled)
+			{
+				if (message.IsNew)
+				{
+					contacts.Add(message.Contact);
+				}
+
+				DisplayContacts();
+			}
 		}
 	}
 }

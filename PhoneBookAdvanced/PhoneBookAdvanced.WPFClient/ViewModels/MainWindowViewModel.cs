@@ -1,26 +1,39 @@
 ﻿using Caliburn.Micro;
-using PhoneBookAdvanced.Interfaces;
-using PhoneBookAdvanced.Services;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PhoneBookAdvanced.WPFClient.ViewModels
 {
-	public class MainWindowViewModel : Conductor<Screen>.Collection.OneActive
+	public class MainWindowViewModel : Conductor<Screen>.Collection.OneActive, IHandle<PhoneBookEditViewModel>, IHandle<ContactEditComplete>
 	{
 		private readonly IEventAggregator _EventAggregator;
+		private PhoneBookViewModel PhoneBookVM;
 
 		public MainWindowViewModel(PhoneBookViewModel phonebook, IEventAggregator eventaggregator)
 		{
 			_EventAggregator = eventaggregator;
+			_EventAggregator.Subscribe(this);
 
 			DisplayName = "Phonebook Advanced";
 
-			Items.Add(phonebook);
-			ActiveItem = phonebook;
+			PhoneBookVM = phonebook;
+			Items.Add(PhoneBookVM);
+			ActiveItem = PhoneBookVM;
+		}
+
+		public void Handle(PhoneBookEditViewModel message)
+		{
+			Items.Add(message);
+			ActiveItem = message;
+		}
+
+		public void Handle(ContactEditComplete message)
+		{
+			while (Items.OfType<PhoneBookEditViewModel>().Count() > 0)
+			{
+				Items.Remove(Items.OfType<PhoneBookEditViewModel>().First());
+			}
+
+			ActiveItem = PhoneBookVM;
 		}
 	}
 }
